@@ -35,7 +35,7 @@ const App = () => {
     return (
     <div>
       <h1>Hello {title}</h1>
-      {/* 객체! */}
+      {/* 객체*/}
       <h1> 
         {welcome.greeting} {welcome.title}
       </h1>

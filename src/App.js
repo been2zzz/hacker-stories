@@ -28,11 +28,20 @@ const App = () => {
       objectID: 1,
     },
   ];
-  const handleChange = event =>{
-    console.log(event.target.value);
-    };
+  const [searchTerm, setSearchTerm] = React.useState('');
+  // A
+  const handleSearch = event =>{
+    // C 상태 변환 함수
+    setSearchTerm(event.target.value);
+  };
 
-    return (
+  const searchedStories = stories.filter(function(story){
+    // title 중 filter된 story만
+    return story.title
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+  });
+  return (
     <div>
       <h1>Hello {title}</h1>
       {/* 객체 */}
@@ -41,15 +50,15 @@ const App = () => {
       </h1>
       {/* 함수 사용 */}
       <h1>Hello {getTitle('React')}</h1>
-      <label htmlFor="search">Search: </label>
-      <input id="search" type="text" onChange={handleChange}/>
+      <Search onSearch={handleSearch} search={searchTerm}/>
       <hr/>
-      <List list={stories}/>
+      <List list={searchedStories}/>
     </div>
     );
   };
-const List = props => (
-  <ul>
+
+  const List = props => (
+    <ul>
     {props.list.map((item) => (
       <li key={item.objectID}>
         <span>
@@ -61,6 +70,16 @@ const List = props => (
       </li>
     ))}
   </ul>
+);
+
+const Search = props => (
+  // 첫번째 : 현재 상태, 두번째: 이 상태를 업데이트하는 함수(상태 업데이트 함수)
+  // 배열 구조 분해
+    <div> 
+      <label htmlFor="search">Search: </label>
+      <input id="search" type="text" onChange={props.onSearch} value={props.search}/>
+      <p>Search for: <strong>{props.search}</strong></p>
+    </div>
 );
 
 export default App;

@@ -2,10 +2,35 @@ import React from 'react';
 
 const title = 'React';
 const welcome = {
-  greeting: 'Hey',
-  title: 'React',
-};
+  greeting:'hi',
+  title:'react'
+}
+const initialStories = [
+  {
+    title: 'React',
+    url: 'https://reactjs.org/',
+    author: 'Jordan Walke',
+    num_comments: 3,
+    points: 4,
+    objectID: 0,
+  },
+  {
+    title: 'Redux',
+    url: 'https://redux.js.org/',
+    author: 'Dan Abramov, Andrew Clark',
+    num_comments: 2,
+    points: 5,
+    objectID: 1,
+  },
+];
 
+const getAsyncStories = () =>
+  new Promise(resolve =>
+    setTimeout(
+      () => resolve({ data: {stories: initialStories } }),
+      2000
+    )
+  );
 // 리액트 커스텀 훅!!!!
 const useSemiPersistentState = (key, initialState) =>{
   const [value, setValue] = React.useState(
@@ -27,30 +52,47 @@ const useSemiPersistentState = (key, initialState) =>{
 function getTitle(){
   return title;
 }
+const stories = [
+  {
+    title: 'React',
+    url: 'https://reactjs.org/',
+    author: 'Jordan Walke',
+    num_comments: 3,
+    points: 4,
+    objectID: 0,
+  },
+  {
+    title: 'Redux',
+    url: 'https://redux.js.org/',
+    author: 'Dan Abramov, Andrew Clark',
+    num_comments: 2,
+    points: 5,
+    objectID: 1,
+  },
+];
 const App = () => {
-  const stories = [
-    {
-      title: 'React',
-      url: 'https://reactjs.org/',
-      author: 'Jordan Walke',
-      num_comments: 3,
-      points: 4,
-      objectID: 0,
-    },
-    {
-      title: 'Redux',
-      url: 'https://redux.js.org/',
-      author: 'Dan Abramov, Andrew Clark',
-      num_comments: 2,
-      points: 5,
-      objectID: 1,
-    },
-  ];
-
   const [searchTerm, setSearchTerm] = useSemiPersistentState(
-    'search' ,
+    'search', 
     'React'
   );
+  // story를 비동기적으로 가져오기 위해 초기 상태 빈 배열
+  const [stories, setStories] = React.useState([]);
+  
+  React.useEffect(() => {
+    getAsyncStories().then(result => {
+      setStories(result.data.stories);
+    })
+  }, []);
+
+  const handleRemoveStory = item => {
+    // 삭제할 아이템을 인수로 하여 필터 조건을 충족하지 않는 모든 아이템 삭제
+    const newStories = stories.filter(
+      story => item.objectID !== story.objectID
+    );
+    // 살아남은 stories
+    console.log(newStories)
+    setStories(newStories);
+  };
   // A
   const handleSearch = event =>{
     // C 상태 변환 함수
@@ -73,17 +115,67 @@ const App = () => {
       </h1>
       {/* 함수 사용 */}
       <h1>Hello {getTitle('React')}</h1>
-      <Search onSearch={handleSearch} search={searchTerm}/>
+
+      <InputWithLabel 
+        id="search"
+        label="Search"
+        value={searchTerm}
+        isFocused
+        onInputChange={handleSearch}
+      >
+        <strong>Search</strong>
+      </InputWithLabel>
       <hr/>
-      <List list={searchedStories}/>
+      <List list={searchedStories} onRemoveItem={handleRemoveStory} />
     </div>
     );
   };
+  // type='text' 함수 시그니처 기본 파라미터가 입력 필드를 대신함
+  const InputWithLabel = ({ 
+    id, 
+    value,
+    type ='text', 
+    onInputChange, 
+    isFocused, 
+    children,
+  }) => {
+    const inputRef = React.useRef();
+    // c
+    React.useEffect(() => {
+      if (isFocused && inputRef.current){
+        // D
+        inputRef.current.focus();
+      }
+    },[isFocused]);
+  
+    return (
+      // A
+      <>
+        <label htmlFor={id}>{children}</label>
+        &nbsp;
+        <input
+          ref={inputRef} 
+          id={id}
+          type={type}
+          value={value}
+          onChange={onInputChange}
+        />
+      </>
+    );
+  };
+  const List = ({ list, onRemoveItem }) => 
+    list.map(item => <Item
+                        key={item.objectID} 
+                        item={item}
+                        onRemoveItem={onRemoveItem}
+                      />);
 
-  const List = ({ list }) => 
-    list.map(item => <Item key={item.objectID} item={item}/>);
-
-  const Item = ({item}) => (
+const Item = ({ item, onRemoveItem }) => {
+  const handleRemoveItem = () => {
+    onRemoveItem(item);
+  };
+    
+  return (
     <div>
       <span>
         <a href={item.url}>{item.title}</a>
@@ -91,17 +183,27 @@ const App = () => {
       <span>{item.author}</span>
       <span>{item.num_comments}</span>
       <span>{item.points}</span>
+      <span>
+        <button type="button" onClick={onRemoveItem.bind(null, item)}>
+          Dismiss
+        </button>
+      </span>
     </div>
   );
-
-const Search = ({ search, onSearch }) => (
-  // 첫번째 : 현재 상태, 두번째: 이 상태를 업데이트하는 함수(상태 업데이트 함수)
-  // 배열 구조 분해
-    <div> 
-      <label htmlFor="search">Search: </label>
-      <input id="search" type="text" onChange={onSearch} value={search}/>
-      <p>Search for: <strong>{search}</strong></p>
-    </div>
-);
+};
+// const Search = ({ search, onSearch }) => (
+//   // 첫번째 : 현재 상태, 두번째: 이 상태를 업데이트하는 함수(상태 업데이트 함수)
+//   // 배열 구조 분해
+//     // fragment
+//     <>  
+//       <label htmlFor="search">Search: </label>
+//       <input 
+//         id="search" 
+//         type="text" 
+//         onChange={onSearch} 
+//         value={search}/>
+//       <p>Search for: <strong>{search}</strong></p>
+//     </>
+// );
 
 export default App;

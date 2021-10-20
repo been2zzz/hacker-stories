@@ -31,6 +31,7 @@ const getAsyncStories = () =>
       2000
     )
   );
+  // new Promise((resolve, reject) => setTimeout(resolve, 2000));
 // 리액트 커스텀 훅!!!!
 const useSemiPersistentState = (key, initialState) =>{
   const [value, setValue] = React.useState(
@@ -70,28 +71,87 @@ const stories = [
     objectID: 1,
   },
 ];
+
+const storiesReducer = (state, action) => {
+  console.log(action.payload) // 초기엔 stories 배열, dismiss 클릭 경우 클릭된 배열이 들어감
+  switch (action.type){
+    case 'STORIES_FETCH_INIT':
+      return {
+        ...state,
+        isLoading: true,
+        isError: false,
+      };
+    case 'STORIES_FETCH_SUCCESS':
+      return {
+        ...state,
+        isLoading: false,
+        isError: false,
+        data: action.payload
+      };
+    case 'STORIES_FETCH_FAILURE':
+      return {
+        ...state,
+        isLoading: false,
+        isError: true,
+      };
+    case 'REMOVE_STORY':
+      return {
+        ...state,
+        data: state.data.filter(
+          story => action.payload.objectID !== story.objectID
+        ),
+      };
+    default:
+      throw new Error();
+  }
+}
 const App = () => {
   const [searchTerm, setSearchTerm] = useSemiPersistentState(
     'search', 
     'React'
   );
   // story를 비동기적으로 가져오기 위해 초기 상태 빈 배열
-  const [stories, setStories] = React.useState([]);
-  
+  // const [stories, setStories] = React.useState([]);
+  // 첫 요소: 현재상태, 두번째 요소: 상태를 업데이트하는 함수
+  const [stories, dispatchStories] = React.useReducer(
+    storiesReducer,
+    // 통합 상태 관리 및 더욱 복잡한 상태 개체를 위해 통합
+    { data: [], isLoading: false, isError: false }
+    );
+    // loding 
+    // const [isLoading, setIsLoading] = React.useState(false);
+    // // error
+    // const [isError, setIsError] = React.useState(false);
   React.useEffect(() => {
-    getAsyncStories().then(result => {
-      setStories(result.data.stories);
+    dispatchStories({ type: 'STORIES_FETCH_INIT'});
+
+    getAsyncStories()
+      .then(result => {
+        dispatchStories({
+          type: 'STORIES_FETCH_SUCCESS',
+          payload: result.data.stories,
+        });
+      // setStories(result.data.stories);
+      // data를 가져온 후 false 처리
+      // setIsLoading(false);
     })
+      .catch(() =>
+        dispatchStories({ type: 'STORIES_FETCH_FAILURE' })
+      );
   }, []);
 
   const handleRemoveStory = item => {
     // 삭제할 아이템을 인수로 하여 필터 조건을 충족하지 않는 모든 아이템 삭제
-    const newStories = stories.filter(
-      story => item.objectID !== story.objectID
-    );
+    // const newStories = stories.filter(
+    //   story => item.objectID !== story.objectID
+    // );
+    dispatchStories({
+      type: 'REMOVE_STORIES',
+      payload: item,
+    });
     // 살아남은 stories
-    console.log(newStories)
-    setStories(newStories);
+    // console.log(newStories)
+    // setStories(newStories);
   };
   // A
   const handleSearch = event =>{
@@ -100,12 +160,10 @@ const App = () => {
     localStorage.setItem('search', event.target.value);
   };
 
-  const searchedStories = stories.filter(function(story){
+  const searchedStories = stories.data.filter(story =>
     // title 중 filter된 story만
-    return story.title
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
-  });
+    story.title.toLowerCase().includes(searchTerm.toLowerCase())
+  );
   return (
     <div>
       <h1>Hello {title}</h1>
@@ -126,7 +184,15 @@ const App = () => {
         <strong>Search</strong>
       </InputWithLabel>
       <hr/>
-      <List list={searchedStories} onRemoveItem={handleRemoveStory} />
+      {/* 조건이 참이면 && 뒷부분이 출력됨 거짓일 시 무시*/}
+      {stories.isError && <p>Something went Wrong ...</p>}
+      {stories.isLoading ? (
+        <p>Loding...</p>
+        ) : (
+          <List 
+            list={searchedStories} 
+            onRemoveItem={handleRemoveStory} />
+      )}
     </div>
     );
   };

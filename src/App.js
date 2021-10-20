@@ -31,7 +31,7 @@ const getAsyncStories = () =>
       2000
     )
   );
-  // new Promise((resolve, reject) => setTimeout(resolve, 2000));
+    // new Promise((resolve, reject) => setTimeout(resolve, 2000));
 // 리액트 커스텀 훅!!!!
 const useSemiPersistentState = (key, initialState) =>{
   const [value, setValue] = React.useState(
@@ -94,7 +94,7 @@ const storiesReducer = (state, action) => {
         isLoading: false,
         isError: true,
       };
-    case 'REMOVE_STORY':
+    case 'REMOVE_STORIES':
       return {
         ...state,
         data: state.data.filter(

@@ -1,5 +1,6 @@
 import React from 'react';
 import axios from 'axios';
+import './App.css';
 
 const title = 'React';
 const welcome = {
@@ -193,9 +194,9 @@ const App = () => {
     // console.log(newStories)
     // setStories(newStories);
   };
-  // A
+  
   const handleSearch = event =>{
-    // C 상태 변환 함수
+    // 상태 변환 함수
     setSearchTerm(event.target.value);
     localStorage.setItem('search', event.target.value);
   };
@@ -206,14 +207,8 @@ const App = () => {
   // );
 
   return (
-    <div>
-      <h1>Hello {title}</h1>
-      {/* 객체 */}
-      <h1> 
-        {welcome.greeting} {welcome.title}
-      </h1>
-      {/* 함수 사용 */}
-      <h1>Hello {getTitle('React')}</h1>
+    <div className="container">
+      <h1 className="headline-primary">My Hacker Stories</h1>
       
       <SearchForm
         searchTerm={searchTerm}
@@ -240,7 +235,7 @@ const SearchForm = ({
   onSearchInput,
   onSearchSubmit,
 }) => (
-  <form onSubmit={onSearchSubmit}>
+  <form onSubmit={onSearchSubmit} className="search-form">
     <InputWithLabel 
       id="search"
       label="Search"
@@ -250,7 +245,10 @@ const SearchForm = ({
     >
       <strong>Search</strong>
     </InputWithLabel>
-    <button type="submit" disabled={!searchTerm}
+    <button 
+      type="submit" 
+      disabled={!searchTerm}
+      className="button button_large"
     >
       Submit
     </button>
@@ -277,7 +275,9 @@ const InputWithLabel = ({
   return (
     // A
     <>
-      <label htmlFor={id}>{children}</label>
+      <label htmlFor={id} className="label">
+        {children}
+      </label>
       &nbsp;
       <input
         ref={inputRef} 
@@ -296,27 +296,26 @@ const List = ({ list, onRemoveItem }) =>
                       onRemoveItem={onRemoveItem}
                     />);
 
-const Item = ({ item, onRemoveItem }) => {
-  const handleRemoveItem = () => {
-    onRemoveItem(item);
-  };
-    
-  return (
-    <div>
-      <span>
-        <a href={item.url}>{item.title}</a>
-      </span>
-      <span>{item.author}</span>
-      <span>{item.num_comments}</span>
-      <span>{item.points}</span>
-      <span>
-        <button type="button" onClick={onRemoveItem.bind(null, item)}>
-          Dismiss
-        </button>
-      </span>
-    </div>
-  );
-};
+const Item = ({ item, onRemoveItem }) => (
+  <div className="item">
+    {/* 인라인 스타일 */}
+    <span style={{ width: '40%' }}>
+      <a href={item.url}>{item.title}</a>
+    </span>
+    <span style={{ width: '30%' }}>{item.author}</span>
+    <span style={{ width: '10%' }}>{item.num_comments}</span>
+    <span style={{ width: '10%' }}>{item.points}</span>
+    <span style={{ width: '10%' }}>
+      <button 
+        type="button" 
+        onClick={onRemoveItem.bind(null, item)}
+        className="button button_small"
+      >
+        Dismiss
+      </button>
+    </span>
+  </div>
+);
 // const Search = ({ search, onSearch }) => (
 //   // 첫번째 : 현재 상태, 두번째: 이 상태를 업데이트하는 함수(상태 업데이트 함수)
 //   // 배열 구조 분해

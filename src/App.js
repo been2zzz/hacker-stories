@@ -1,4 +1,5 @@
 import React from 'react';
+import axios from 'axios';
 
 const title = 'React';
 const welcome = {
@@ -32,6 +33,7 @@ const getAsyncStories = () =>
     )
   );
     // new Promise((resolve, reject) => setTimeout(resolve, 2000));
+
 // 리액트 커스텀 훅!!!!
 const useSemiPersistentState = (key, initialState) =>{
   const [value, setValue] = React.useState(
@@ -77,6 +79,7 @@ const storiesReducer = (state, action) => {
   switch (action.type){
     case 'STORIES_FETCH_INIT':
       return {
+        // 기존 state 객체 값 유지(불변성)를 위해 객체 복사
         ...state,
         isLoading: true,
         isError: false,
@@ -105,11 +108,28 @@ const storiesReducer = (state, action) => {
       throw new Error();
   }
 }
+
+const API_ENDPOINT = 'https://hn.algolia.com/api/v1/search?query=';
+
 const App = () => {
   const [searchTerm, setSearchTerm] = useSemiPersistentState(
     'search', 
     'React'
   );
+
+  // 정적 API URL을 새로운 상태로 설정
+  const [url, setUrl] = React.useState(
+    `${API_ENDPOINT}${searchTerm}`
+  )
+
+  const handleSearchInput = event => {
+    setSearchTerm(event.target.value);
+  };
+
+  const handleSearchSubmit = () => {
+    setUrl(`${API_ENDPOINT}${searchTerm}`);
+  };
+
   // story를 비동기적으로 가져오기 위해 초기 상태 빈 배열
   // const [stories, setStories] = React.useState([]);
   // 첫 요소: 현재상태, 두번째 요소: 상태를 업데이트하는 함수
@@ -122,23 +142,42 @@ const App = () => {
     // const [isLoading, setIsLoading] = React.useState(false);
     // // error
     // const [isError, setIsError] = React.useState(false);
-  React.useEffect(() => {
+    
+  const handleFetchStories = React.useCallback(() => {
     dispatchStories({ type: 'STORIES_FETCH_INIT'});
 
-    getAsyncStories()
+    axios // 인수로 url, promise 반환
+      .get(url)
+      .then(response => response.json())
       .then(result => {
         dispatchStories({
           type: 'STORIES_FETCH_SUCCESS',
-          payload: result.data.stories,
+          payload: result.data.hits,
         });
-      // setStories(result.data.stories);
-      // data를 가져온 후 false 처리
-      // setIsLoading(false);
-    })
+      })
       .catch(() =>
         dispatchStories({ type: 'STORIES_FETCH_FAILURE' })
       );
-  }, []);
+  }, [url]);
+
+  React.useEffect(() => {
+    handleFetchStories();
+  }, [handleFetchStories]);
+
+    // getAsyncStories()
+    //   .then(result => {
+    //     dispatchStories({
+    //       type: 'STORIES_FETCH_SUCCESS',
+    //       payload: result.data.stories,
+    //     });
+    //   // setStories(result.data.stories);
+    //   // data를 가져온 후 false 처리
+    //   // setIsLoading(false);
+    // })
+    //   .catch(() =>
+    //     dispatchStories({ type: 'STORIES_FETCH_FAILURE' })
+    //   );
+  // }, [searchTerm]);
 
   const handleRemoveStory = item => {
     // 삭제할 아이템을 인수로 하여 필터 조건을 충족하지 않는 모든 아이템 삭제
@@ -160,10 +199,11 @@ const App = () => {
     localStorage.setItem('search', event.target.value);
   };
 
-  const searchedStories = stories.data.filter(story =>
-    // title 중 filter된 story만
-    story.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // const searchedStories = stories.data.filter(story =>
+  //   // title 중 filter된 story만
+  //   stories.title.toLowerCase().includes(searchTerm.toLowerCase())
+  // );
+
   return (
     <div>
       <h1>Hello {title}</h1>
@@ -179,10 +219,17 @@ const App = () => {
         label="Search"
         value={searchTerm}
         isFocused
-        onInputChange={handleSearch}
+        onInputChange={handleSearchInput}
       >
         <strong>Search</strong>
       </InputWithLabel>
+      <button
+        type="betton"
+        disabled={!searchTerm}
+        onClick={handleSearchSubmit}
+      >
+        Submit
+      </button>
       <hr/>
       {/* 조건이 참이면 && 뒷부분이 출력됨 거짓일 시 무시*/}
       {stories.isError && <p>Something went Wrong ...</p>}
@@ -190,7 +237,7 @@ const App = () => {
         <p>Loding...</p>
         ) : (
           <List 
-            list={searchedStories} 
+            list={stories.data} 
             onRemoveItem={handleRemoveStory} />
       )}
     </div>

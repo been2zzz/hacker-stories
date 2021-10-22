@@ -1,8 +1,83 @@
 import React from 'react';
 import axios from 'axios';
-import styles from './App.module.css';
-import cs from 'classnames';
+import styled from 'styled-components';
 
+const StyledContainer = styled.div`
+  height: 100vw;
+  padding: 20px;
+
+  background: #83a4d4;
+  background: linear-gradient(to left, #b6fbff, #83a4d4);
+
+  color: #171212;
+`;
+
+const StyledHeadlinePrimary = styled.h1`
+  font-size: 48px;
+  font-weight: 300;
+  letter-spacing: 2px;
+`;
+
+const StyledItem = styled.div`
+  display: flex;
+  align-items: center;
+  padding-bottom: 5px;
+`;
+
+const StyledColumn = styled.span`
+  padding: 0 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+
+  a {
+    color: inherit;
+  }
+  width: ${props => props.width};
+`;
+
+const StyledButton = styled.button`
+  background: transparent;
+  border: 1px solid #171212;
+  padding: 5px;
+  cursor: pointer;
+
+  transition: all 0.1s ease-in;
+
+  &:hover {
+    background: #171212;
+    color: #ffffff;
+  }
+`;
+const StyledButtonSmall = styled(StyledButton)`
+  padding: 5px;
+`;
+
+const StyledButtonLarge = styled(StyledButton)`
+  padding: 10px;
+`;
+
+const StyledSearchForm = styled.form`
+  padding: 10px 0 20px 0;
+  display: flex;
+  align-items: baseline;
+`;
+
+const StyledLabel = styled.label`
+  border-top: 1px solid #171212;
+  border-left: 1px solid #171212;
+  padding-left: 5px;
+  font-size: 24px;
+`;
+
+const StyledInput = styled.input`
+  border: none;
+  border-bottom: 1px solid #171212;
+  background-color: transparent;
+
+  font-size: 24px;
+`;
 const title = 'React';
 const welcome = {
   greeting:'hi',
@@ -209,8 +284,8 @@ const App = () => {
 
   return (
     // CSS 모듈 사용시 JSX표현식 사용하여 엘리먼트 할당
-    <div className={styles.container}>
-      <h1 className={styles.headlinePrimary}>My Hacker Stories</h1>
+    <StyledContainer>
+      <StyledHeadlinePrimary>My Hacker Stories</StyledHeadlinePrimary>
       
       <SearchForm
         searchTerm={searchTerm}
@@ -227,7 +302,7 @@ const App = () => {
             list={stories.data} 
             onRemoveItem={handleRemoveStory} />
       )}
-    </div>
+    </StyledContainer>
     );
   };
 
@@ -237,26 +312,20 @@ const SearchForm = ({
   onSearchInput,
   onSearchSubmit,
 }) => (
-  <form onSubmit={onSearchSubmit} className={styles.searchForm}>
-    <InputWithLabel 
+  <StyledSearchForm onSubmit={onSearchSubmit}>
+    <InputWithLabel
       id="search"
-      label="Search"
       value={searchTerm}
       isFocused
       onInputChange={onSearchInput}
     >
-      <strong>Search</strong>
+      <strong>Search:</strong>
     </InputWithLabel>
-    <button 
-      type="submit" 
-      disabled={!searchTerm}
-      // classnames 라이브러리 사용
-      className={cs(styles.button, styles.buttonLarge)} 
-      // className={`${styles.button} ${styles.buttonLarge}`}
-    >
+
+    <StyledButtonLarge type="submit" disabled={!searchTerm}>
       Submit
-    </button>
-  </form>
+    </StyledButtonLarge>
+  </StyledSearchForm>
 );
 // type='text' 함수 시그니처 기본 파라미터가 입력 필드를 대신함
 const InputWithLabel = ({ 
@@ -279,17 +348,14 @@ const InputWithLabel = ({
   return (
     // A
     <>
-      <label htmlFor={id} className={styles.label}>
-        {children}
-      </label>
-      &nbsp;
-      <input
+      <StyledLabel htmlFor={id}>{children}</StyledLabel>
+        &nbsp;
+      <StyledInput
         ref={inputRef} 
         id={id}
         type={type}
         value={value}
         onChange={onInputChange}
-        className={styles.input}
       />
     </>
   );
@@ -302,24 +368,22 @@ const List = ({ list, onRemoveItem }) =>
                     />);
 
 const Item = ({ item, onRemoveItem }) => (
-  <div className={styles.item}>
-    {/* 인라인 스타일 */}
-    <span style={{ width: '40%' }}>
+  <StyledItem>
+    <StyledColumn width="40%">
       <a href={item.url}>{item.title}</a>
-    </span>
-    <span style={{ width: '30%' }}>{item.author}</span>
-    <span style={{ width: '10%' }}>{item.num_comments}</span>
-    <span style={{ width: '10%' }}>{item.points}</span>
-    <span style={{ width: '10%' }}>
-      <button 
-        type="button" 
-        onClick={onRemoveItem.bind(null, item)}
-        className={`${styles.button} ${styles.buttonSmall}`}
+    </StyledColumn>
+    <StyledColumn width="30%">{item.author}</StyledColumn>
+    <StyledColumn width="10%">{item.num_comments}</StyledColumn>
+    <StyledColumn width="10%">{item.points}</StyledColumn>
+    <StyledColumn width="10%">
+      <StyledButtonSmall
+        type="button"
+        onClick={() => onRemoveItem(item)}
       >
         Dismiss
-      </button>
-    </span>
-  </div>
+      </StyledButtonSmall>
+    </StyledColumn>
+  </StyledItem>
 );
 // const Search = ({ search, onSearch }) => (
 //   // 첫번째 : 현재 상태, 두번째: 이 상태를 업데이트하는 함수(상태 업데이트 함수)

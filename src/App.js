@@ -126,8 +126,11 @@ const App = () => {
     setSearchTerm(event.target.value);
   };
 
-  const handleSearchSubmit = () => {
+  const handleSearchSubmit = event => {
     setUrl(`${API_ENDPOINT}${searchTerm}`);
+
+    // 브라우저를 다시 로드하는 HTML 폼 기본 동작 막기
+    event.preventDefault();
   };
 
   // story를 비동기적으로 가져오기 위해 초기 상태 빈 배열
@@ -211,23 +214,12 @@ const App = () => {
       </h1>
       {/* 함수 사용 */}
       <h1>Hello {getTitle('React')}</h1>
-
-      <InputWithLabel 
-        id="search"
-        label="Search"
-        value={searchTerm}
-        isFocused
-        onInputChange={handleSearchInput}
-      >
-        <strong>Search</strong>
-      </InputWithLabel>
-      <button
-        type="betton"
-        disabled={!searchTerm}
-        onClick={handleSearchSubmit}
-      >
-        Submit
-      </button>
+      
+      <SearchForm
+        searchTerm={searchTerm}
+        onSearchInput={handleSearchInput}
+        onSearchSubmit={handleSearchSubmit}
+      />
       <hr/>
       {/* 조건이 참이면 && 뒷부분이 출력됨 거짓일 시 무시*/}
       {stories.isError && <p>Something went Wrong ...</p>}
@@ -241,45 +233,68 @@ const App = () => {
     </div>
     );
   };
-  // type='text' 함수 시그니처 기본 파라미터가 입력 필드를 대신함
-  const InputWithLabel = ({ 
-    id, 
-    value,
-    type ='text', 
-    onInputChange, 
-    isFocused, 
-    children,
-  }) => {
-    const inputRef = React.useRef();
-    // c
-    React.useEffect(() => {
-      if (isFocused && inputRef.current){
-        // D
-        inputRef.current.focus();
-      }
-    },[isFocused]);
-  
-    return (
-      // A
-      <>
-        <label htmlFor={id}>{children}</label>
-        &nbsp;
-        <input
-          ref={inputRef} 
-          id={id}
-          type={type}
-          value={value}
-          onChange={onInputChange}
-        />
-      </>
-    );
-  };
-  const List = ({ list, onRemoveItem }) => 
-    list.map(item => <Item
-                        key={item.objectID} 
-                        item={item}
-                        onRemoveItem={onRemoveItem}
-                      />);
+
+// SearchForm 컴포넌트 분리 
+const SearchForm = ({
+  searchTerm,
+  onSearchInput,
+  onSearchSubmit,
+}) => (
+  <form onSubmit={onSearchSubmit}>
+    <InputWithLabel 
+      id="search"
+      label="Search"
+      value={searchTerm}
+      isFocused
+      onInputChange={onSearchInput}
+    >
+      <strong>Search</strong>
+    </InputWithLabel>
+    <button type="submit" disabled={!searchTerm}
+    >
+      Submit
+    </button>
+  </form>
+);
+// type='text' 함수 시그니처 기본 파라미터가 입력 필드를 대신함
+const InputWithLabel = ({ 
+  id, 
+  value,
+  type ='text', 
+  onInputChange, 
+  isFocused, 
+  children,
+}) => {
+  const inputRef = React.useRef();
+  // c
+  React.useEffect(() => {
+    if (isFocused && inputRef.current){
+      // D
+      inputRef.current.focus();
+    }
+  },[isFocused]);
+
+  return (
+    // A
+    <>
+      <label htmlFor={id}>{children}</label>
+      &nbsp;
+      <input
+        ref={inputRef} 
+        id={id}
+        type={type}
+        value={value}
+        onChange={onInputChange}
+      />
+    </>
+  );
+};
+const List = ({ list, onRemoveItem }) => 
+  list.map(item => <Item
+                      key={item.objectID} 
+                      item={item}
+                      onRemoveItem={onRemoveItem}
+                    />);
 
 const Item = ({ item, onRemoveItem }) => {
   const handleRemoveItem = () => {

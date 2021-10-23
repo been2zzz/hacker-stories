@@ -118,6 +118,10 @@ const getAsyncStories = () =>
 
 // 리액트 커스텀 훅!!!!
 const useSemiPersistentState = (key, initialState) =>{
+  // 첫 렌더링에서 사이드이펙트 실행은 불필요
+  // useRef 훅을 사용하여 첫 렌더링 사이드이펙트 막기
+  const isMounted = React.useRef(false);
+
   const [value, setValue] = React.useState(
     // localStorage.getItem('search') : 저장된 값이 존재하면 초기 상태 설정 사용
     // 'React' : 기본값
@@ -127,7 +131,12 @@ const useSemiPersistentState = (key, initialState) =>{
     // 첫번째 인수: 사이드 이펙트가 일어나는 함수 => 브라우저 로컬 저장소에 searchTerm 입력
     // 두번째 인수: 변수의 종속성 '배열'
     React.useEffect(() => {
-      localStorage.setItem(key, value);
+      if (!isMounted.current) {
+        isMounted.current = true;
+      } else {
+        console.log('a');
+        localStorage.setItem(key, value);
+      }
     }, [value, key]);
 
     // React.useState에 쓰일 value, setValue 반환
@@ -191,6 +200,14 @@ const storiesReducer = (state, action) => {
   }
 }
 
+const getSumComments = stories => {
+  console.log('c');
+
+  return stories.data.reduce(
+    (result, value) => result + value.num_comments,
+    0
+  );
+};
 const API_ENDPOINT = 'https://hn.algolia.com/api/v1/search?query=';
 
 const App = () => {
@@ -198,7 +215,6 @@ const App = () => {
     'search', 
     'React'
   );
-
   // 정적 API URL을 새로운 상태로 설정
   const [url, setUrl] = React.useState(
     `${API_ENDPOINT}${searchTerm}`
@@ -207,14 +223,14 @@ const App = () => {
   const handleSearchInput = event => {
     setSearchTerm(event.target.value);
   };
-
+  
   const handleSearchSubmit = event => {
     setUrl(`${API_ENDPOINT}${searchTerm}`);
-
+    
     // 브라우저를 다시 로드하는 HTML 폼 기본 동작 막기
     event.preventDefault();
   };
-
+  
   // story를 비동기적으로 가져오기 위해 초기 상태 빈 배열
   // const [stories, setStories] = React.useState([]);
   // 첫 요소: 현재상태, 두번째 요소: 상태를 업데이트하는 함수
@@ -228,6 +244,9 @@ const App = () => {
     // // error
     // const [isError, setIsError] = React.useState(false);
     
+  const sumComments = React.useMemo(() => getSumComments(stories), [
+    stories,
+  ]);
   const handleFetchStories = React.useCallback(async () => {
     dispatchStories({ type: 'STORIES_FETCH_INIT'});
 
@@ -262,7 +281,8 @@ const App = () => {
     //   );
   // }, [searchTerm]);
 
-  const handleRemoveStory = item => {
+  // useCallback 훅을 사용하여 (종속성 중 하나가 변경된 경우) 리렌더링에만 함수를 생성하도록!
+  const handleRemoveStory = React.useCallback(item => {
     // 삭제할 아이템을 인수로 하여 필터 조건을 충족하지 않는 모든 아이템 삭제
     // const newStories = stories.filter(
     //   story => item.objectID !== story.objectID
@@ -274,7 +294,7 @@ const App = () => {
     // 살아남은 stories
     // console.log(newStories)
     // setStories(newStories);
-  };
+  }, []);
   
   const handleSearch = event =>{
     // 상태 변환 함수
@@ -286,11 +306,11 @@ const App = () => {
   //   // title 중 filter된 story만
   //   stories.title.toLowerCase().includes(searchTerm.toLowerCase())
   // );
-
+  console.log('B:App');
   return (
     // CSS 모듈 사용시 JSX표현식 사용하여 엘리먼트 할당
     <StyledContainer>
-      <StyledHeadlinePrimary>My Hacker Stories</StyledHeadlinePrimary>
+      <StyledHeadlinePrimary>My Hacker Stories with {sumComments} comments</StyledHeadlinePrimary>
       
       <SearchForm
         searchTerm={searchTerm}
@@ -312,11 +332,12 @@ const App = () => {
   };
 
 // SearchForm 컴포넌트 분리 
-const SearchForm = ({
+const SearchForm = React.memo(
+  ({
   searchTerm,
   onSearchInput,
   onSearchSubmit,
-}) => (
+}) => console.log('form')||(
   <StyledSearchForm onSubmit={onSearchSubmit}>
     <InputWithLabel
       id="search"
@@ -331,7 +352,7 @@ const SearchForm = ({
       Submit
     </StyledButtonLarge>
   </StyledSearchForm>
-);
+));
 // type='text' 함수 시그니처 기본 파라미터가 입력 필드를 대신함
 const InputWithLabel = ({ 
   id, 
@@ -365,14 +386,19 @@ const InputWithLabel = ({
     </>
   );
 };
-const List = ({ list, onRemoveItem }) => 
-  list.map(item => <Item
-                      key={item.objectID} 
-                      item={item}
-                      onRemoveItem={onRemoveItem}
-                    />);
-
-const Item = ({ item, onRemoveItem }) => (
+const List = React.memo (
+  ({ list, onRemoveItem }) =>
+    console.log('B:List') || 
+    list.map(item => (
+      <Item
+        key={item.objectID} 
+        item={item}
+        onRemoveItem={onRemoveItem}
+      />
+    ))
+);
+const Item = React.memo(
+  ({ item, onRemoveItem }) => console.log('item')||(
   <StyledItem>
     <StyledColumn width="40%">
       <a href={item.url}>{item.title}</a>
@@ -389,7 +415,7 @@ const Item = ({ item, onRemoveItem }) => (
       </StyledButtonSmall>
     </StyledColumn>
   </StyledItem>
-);
+));
 // const Search = ({ search, onSearch }) => (
 //   // 첫번째 : 현재 상태, 두번째: 이 상태를 업데이트하는 함수(상태 업데이트 함수)
 //   // 배열 구조 분해

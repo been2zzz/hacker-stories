@@ -49,38 +49,58 @@ const SORTS = {
 };
 
 const List = React.memo(({ list, onRemoveItem }) => {
-    const [sort, setSort] = React.useState('NONE');
+    const [sort, setSort] = React.useState({
+        sortKey: 'NONE',
+        isSorted: false,
+        isReverse: false,
+    });
 
     const handleSort = sortKey => {
-        setSort(sortKey);
+        // 인자로 들어온 sortKey가 역방향 확인 로직
+        const isReverse = sort.sortKey === sortKey && !sort.isReverse;
+        setSort({ sortKey, isReverse }); // 단축 객체 초기자 표기법
     };
     
-    const sortFunction = SORTS[sort];
-    const sortedList = sortFunction(list);
+    const sortFunction = SORTS[sort.sortKey];
+    const sortedList = sort.isReverse
+        ? sortFunction(list).reverse()
+        : sortFunction(list);
     return (
     <div>
         <div style={{ display: 'flex' }}>
         <span style={{ width: '40%' }}>
           <StyledButtonSmall type="button" onClick={() => handleSort('TITLE')}>
             Title
+            <span>
+                {'TITLE' === sort.sortKey ? (sort.isReverse ? " 👇" : " 👆") : ""}
+            </span>
           </StyledButtonSmall>
         </span>
         <span style={{ width: '30%' }}>
           <StyledButtonSmall type="button" onClick={() => handleSort('AUTHOR')}>
             Author
+            <span>
+                {'AUTHOR' === sort.sortKey ? (sort.isReverse ? " 👇" : " 👆") : ""}
+            </span>
           </StyledButtonSmall>
         </span>
         <span style={{ width: '10%' }}>
           <StyledButtonSmall type="button" onClick={() => handleSort('COMMENT')}>
             Comments
+            <span>
+                {'COMMENT' === sort.sortKey ? (sort.isReverse ? " 👇" : " 👆") : ""}
+            </span>
           </StyledButtonSmall>
         </span>
         <span style={{ width: '10%' }}>
           <StyledButtonSmall type="button" onClick={() => handleSort('POINT')}>
             Points
+            <span>
+                {'POINT' === sort.sortKey ? (sort.isReverse ? " 👇" : " 👆") : ""}
+            </span>
           </StyledButtonSmall>
         </span>
-        <span style={{ width: '10%' }}>Actions</span>
+        <span style={{ width: '10%' }}>Dismiss</span>
       </div>
         {sortedList.map(item => (
         <Item

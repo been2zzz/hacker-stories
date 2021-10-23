@@ -1,14 +1,15 @@
 import React from 'react';
 import axios from 'axios';
+
+import SearchForm from './SearchForm';
+import List from './List';
+
 import styled from 'styled-components';
-import { ReactComponent as Check } from './check.svg';
 const StyledContainer = styled.div`
   height: 100vw;
   padding: 20px;
-
   background: #83a4d4;
   background: linear-gradient(to left, #b6fbff, #83a4d4);
-
   color: #171212;
 `;
 
@@ -18,71 +19,6 @@ const StyledHeadlinePrimary = styled.h1`
   letter-spacing: 2px;
 `;
 
-const StyledItem = styled.div`
-  display: flex;
-  align-items: center;
-  padding-bottom: 5px;
-`;
-
-const StyledColumn = styled.span`
-  padding: 0 5px;
-  white-space: nowrap;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-
-  a {
-    color: inherit;
-  }
-  width: ${props => props.width};
-`;
-
-const StyledButton = styled.button`
-  background: transparent;
-  border: 1px solid #171212;
-  padding: 5px;
-  cursor: pointer;
-
-  transition: all 0.1s ease-in;
-
-  &:hover {
-    background: #171212;
-    color: #ffffff;
-  }
-
-  &:hover > svg > g {
-    fill: #ffffff;
-    stroke: #ffffff;
-  }
-`;
-const StyledButtonSmall = styled(StyledButton)`
-  padding: 5px;
-`;
-
-const StyledButtonLarge = styled(StyledButton)`
-  padding: 10px;
-`;
-
-const StyledSearchForm = styled.form`
-  padding: 10px 0 20px 0;
-  display: flex;
-  align-items: baseline;
-`;
-
-const StyledLabel = styled.label`
-  border-top: 1px solid #171212;
-  border-left: 1px solid #171212;
-  padding-left: 5px;
-  font-size: 24px;
-`;
-
-const StyledInput = styled.input`
-  border: none;
-  border-bottom: 1px solid #171212;
-  background-color: transparent;
-
-  font-size: 24px;
-`;
 const title = 'React';
 const welcome = {
   greeting:'hi',
@@ -330,105 +266,5 @@ const App = () => {
     </StyledContainer>
     );
   };
-
-// SearchForm 컴포넌트 분리 
-const SearchForm = React.memo(
-  ({
-  searchTerm,
-  onSearchInput,
-  onSearchSubmit,
-}) => console.log('form')||(
-  <StyledSearchForm onSubmit={onSearchSubmit}>
-    <InputWithLabel
-      id="search"
-      value={searchTerm}
-      isFocused
-      onInputChange={onSearchInput}
-    >
-      <strong>Search:</strong>
-    </InputWithLabel>
-
-    <StyledButtonLarge type="submit" disabled={!searchTerm}>
-      Submit
-    </StyledButtonLarge>
-  </StyledSearchForm>
-));
-// type='text' 함수 시그니처 기본 파라미터가 입력 필드를 대신함
-const InputWithLabel = ({ 
-  id, 
-  value,
-  type ='text', 
-  onInputChange, 
-  isFocused, 
-  children,
-}) => {
-  const inputRef = React.useRef();
-  // c
-  React.useEffect(() => {
-    if (isFocused && inputRef.current){
-      // D
-      inputRef.current.focus();
-    }
-  },[isFocused]);
-
-  return (
-    // A
-    <>
-      <StyledLabel htmlFor={id}>{children}</StyledLabel>
-        &nbsp;
-      <StyledInput
-        ref={inputRef} 
-        id={id}
-        type={type}
-        value={value}
-        onChange={onInputChange}
-      />
-    </>
-  );
-};
-const List = React.memo (
-  ({ list, onRemoveItem }) =>
-    console.log('B:List') || 
-    list.map(item => (
-      <Item
-        key={item.objectID} 
-        item={item}
-        onRemoveItem={onRemoveItem}
-      />
-    ))
-);
-const Item = React.memo(
-  ({ item, onRemoveItem }) => console.log('item')||(
-  <StyledItem>
-    <StyledColumn width="40%">
-      <a href={item.url}>{item.title}</a>
-    </StyledColumn>
-    <StyledColumn width="30%">{item.author}</StyledColumn>
-    <StyledColumn width="10%">{item.num_comments}</StyledColumn>
-    <StyledColumn width="10%">{item.points}</StyledColumn>
-    <StyledColumn width="10%">
-      <StyledButtonSmall
-        type="button"
-        onClick={() => onRemoveItem(item)}
-      >
-        <Check height="18px" width="18px" />
-      </StyledButtonSmall>
-    </StyledColumn>
-  </StyledItem>
-));
-// const Search = ({ search, onSearch }) => (
-//   // 첫번째 : 현재 상태, 두번째: 이 상태를 업데이트하는 함수(상태 업데이트 함수)
-//   // 배열 구조 분해
-//     // fragment
-//     <>  
-//       <label htmlFor="search">Search: </label>
-//       <input 
-//         id="search" 
-//         type="text" 
-//         onChange={onSearch} 
-//         value={search}/>
-//       <p>Search for: <strong>{search}</strong></p>
-//     </>
-// );
 
 export default App;

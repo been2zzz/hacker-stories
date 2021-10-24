@@ -6,11 +6,11 @@ import { ReactComponent as Check } from './check.svg';
 const StyledItem = styled.div`
   display: flex;
   align-items: center;
-  padding-bottom: 5px;
+  padding-bottom: 15px;
 `;
 
 const StyledColumn = styled.span`
-  padding: 0 5px;
+  padding: 0 10px;
   white-space: nowrap;
   overflow: hidden;
   white-space: nowrap;

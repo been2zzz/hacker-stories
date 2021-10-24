@@ -18,12 +18,21 @@ const StyledHeadlinePrimary = styled.h1`
   font-weight: 300;
   letter-spacing: 2px;
 `;
-
+const StyledButton = styled.button`
+  background: transparent;
+  border: 1px solid #171212;
+  padding: 5px;
+  margin-left: 5px;
+  cursor: pointer;
+  transition: all 0.1s ease-in;
+  border-radius: 40%;
+  &:hover {
+    background: #171212;
+    color: #ffffff;
+  }
+`;
 const title = 'React';
-const welcome = {
-  greeting:'hi',
-  title:'react'
-}
+
 const initialStories = [
   {
     title: 'React',
@@ -67,10 +76,10 @@ const useSemiPersistentState = (key, initialState) =>{
     // 첫번째 인수: 사이드 이펙트가 일어나는 함수 => 브라우저 로컬 저장소에 searchTerm 입력
     // 두번째 인수: 변수의 종속성 '배열'
     React.useEffect(() => {
+      alert('first effect')
       if (!isMounted.current) {
         isMounted.current = true;
       } else {
-        console.log('a');
         localStorage.setItem(key, value);
       }
     }, [value, key]);
@@ -78,28 +87,6 @@ const useSemiPersistentState = (key, initialState) =>{
     // React.useState에 쓰일 value, setValue 반환
     return [value, setValue];
   };
-
-function getTitle(){
-  return title;
-}
-const stories = [
-  {
-    title: 'React',
-    url: 'https://reactjs.org/',
-    author: 'Jordan Walke',
-    num_comments: 3,
-    points: 4,
-    objectID: 0,
-  },
-  {
-    title: 'Redux',
-    url: 'https://redux.js.org/',
-    author: 'Dan Abramov, Andrew Clark',
-    num_comments: 2,
-    points: 5,
-    objectID: 1,
-  },
-];
 
 const storiesReducer = (state, action) => {
   console.log(action.payload) // 초기엔 stories 배열, dismiss 클릭 경우 클릭된 배열이 들어감
@@ -137,8 +124,6 @@ const storiesReducer = (state, action) => {
 }
 
 const getSumComments = stories => {
-  console.log('c');
-
   return stories.data.reduce(
     (result, value) => result + value.num_comments,
     0
@@ -146,26 +131,65 @@ const getSumComments = stories => {
 };
 const API_ENDPOINT = 'https://hn.algolia.com/api/v1/search?query=';
 
+// url에서 searchTerm만 추출
+const extractSearchTerm = url => url.replace(API_ENDPOINT, '');
+
+const getLastSearches = urls => 
+urls // 빈 배열 result  
+  .reduce((result, url, index) => {
+    const searchTerm = extractSearchTerm(url);
+    
+    if (index === 0) {
+      return result.concat(searchTerm);
+    }
+    
+    const previousSearchTerm = result[result.length -1];
+    
+    if (searchTerm === previousSearchTerm) {
+      return result;
+    } else {
+      return result.concat(searchTerm);
+    }
+    }, [])
+  .slice(-6)
+  .slice(0, -1)
+  .map(extractSearchTerm);
+
+const getUrl = searchTerm => `${API_ENDPOINT}${searchTerm}`;
+
 const App = () => {
   const [searchTerm, setSearchTerm] = useSemiPersistentState(
     'search', 
     'React'
   );
   // 정적 API URL을 새로운 상태로 설정
-  const [url, setUrl] = React.useState(
-    `${API_ENDPOINT}${searchTerm}`
-  )
+  const [urls, setUrls] = React.useState([getUrl(searchTerm)]);
 
   const handleSearchInput = event => {
     setSearchTerm(event.target.value);
   };
   
   const handleSearchSubmit = event => {
-    setUrl(`${API_ENDPOINT}${searchTerm}`);
-    
+    handleSearch(searchTerm);
     // 브라우저를 다시 로드하는 HTML 폼 기본 동작 막기
     event.preventDefault();
   };
+
+  const handleLastSearch = searchTerm => {
+    setSearchTerm(searchTerm); // searchTerm 업데이트
+
+    handleSearch(searchTerm); // urls 배열 concat 
+  };
+
+  const handleSearch = searchTerm =>{
+    const url = getUrl(searchTerm);
+    setUrls(urls.concat(url));
+    // 상태 변환 함수
+    // setSearchTerm(event.target.value);
+    // localStorage.setItem('search', event.target.value);
+  };
+
+  const lastSearches = getLastSearches(urls);
   
   // story를 비동기적으로 가져오기 위해 초기 상태 빈 배열
   // const [stories, setStories] = React.useState([]);
@@ -175,10 +199,6 @@ const App = () => {
     // 통합 상태 관리 및 더욱 복잡한 상태 개체를 위해 통합
     { data: [], isLoading: false, isError: false }
     );
-    // loding 
-    // const [isLoading, setIsLoading] = React.useState(false);
-    // // error
-    // const [isError, setIsError] = React.useState(false);
     
   const sumComments = React.useMemo(() => getSumComments(stories), [
     stories,
@@ -187,7 +207,8 @@ const App = () => {
     dispatchStories({ type: 'STORIES_FETCH_INIT'});
 
     try {
-      const result = await axios.get(url);
+      const lastUrl = urls[urls.length -1];
+      const result = await axios.get(lastUrl);
       
       dispatchStories({
         type: 'STORIES_FETCH_SUCCESS',
@@ -196,9 +217,11 @@ const App = () => {
     } catch {
       dispatchStories({ type: 'STORIES_FETCH_FAILURE' })
     }
-  }, [url]);
+  }, [urls]);
 
   React.useEffect(() => {
+    alert('second effect')
+
     handleFetchStories();
   }, [handleFetchStories]);
 
@@ -232,17 +255,10 @@ const App = () => {
     // setStories(newStories);
   }, []);
   
-  const handleSearch = event =>{
-    // 상태 변환 함수
-    setSearchTerm(event.target.value);
-    localStorage.setItem('search', event.target.value);
-  };
-
   // const searchedStories = stories.data.filter(story =>
   //   // title 중 filter된 story만
   //   stories.title.toLowerCase().includes(searchTerm.toLowerCase())
   // );
-  console.log('B:App');
   return (
     // CSS 모듈 사용시 JSX표현식 사용하여 엘리먼트 할당
     <StyledContainer>
@@ -253,18 +269,37 @@ const App = () => {
         onSearchInput={handleSearchInput}
         onSearchSubmit={handleSearchSubmit}
       />
+      <LastSearches
+        lastSearches={lastSearches}
+        onLastSearch={handleLastSearch}
+      />
       <hr/>
-      {/* 조건이 참이면 && 뒷부분이 출력됨 거짓일 시 무시*/}
-      {stories.isError && <p>Something went Wrong ...</p>}
+
       {stories.isLoading ? (
         <p>Loding...</p>
         ) : (
           <List 
-            list={stories.data} 
-            onRemoveItem={handleRemoveStory} />
-      )}
+          list={stories.data} 
+          onRemoveItem={handleRemoveStory} />
+          )}
+      {/* 조건이 참이면 && 뒷부분이 출력됨 거짓일 시 무시*/}
+      {stories.isError && <p>Something went Wrong ...</p>}
     </StyledContainer>
     );
   };
 
+const LastSearches = ({ lastSearches, onLastSearch }) => (
+  <>
+  <span>Last Search Term</span>
+  {lastSearches.map((searchTerm, index) => (
+    <StyledButton
+      key={searchTerm + index}
+      type="button"
+      onClick={() => onLastSearch(searchTerm)}
+    >
+      {searchTerm}
+    </StyledButton>
+  ))}
+  </>
+);
 export default App;

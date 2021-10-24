@@ -45,13 +45,12 @@ const SORTS = {
     TITLE: list => sortBy(list, 'title'),
     AUTHOR: list => sortBy(list, 'author'),
     COMMENT: list => sortBy(list, 'num_comments').reverse(),
-    POINT: list => sortBy(list, 'points').reverse(),
+    POINT: list => sortBy(list, 'points').reverse(), 
 };
 
 const List = React.memo(({ list, onRemoveItem }) => {
     const [sort, setSort] = React.useState({
         sortKey: 'NONE',
-        isSorted: false,
         isReverse: false,
     });
 

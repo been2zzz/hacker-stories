@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import axios from 'axios';
 
 import SearchForm from './SearchForm';
@@ -44,25 +44,23 @@ const extractSearchTerm = url =>
     .replace(PARAM_SEARCH, ''); // react
 
 const getLastSearches = urls => 
-urls // 빈 배열 result  
-  .reduce((result, url, index) => {
-    const searchTerm = extractSearchTerm(url);
-    
-    if (index === 0) {
-      return result.concat(searchTerm);
-    }
-    
-    const previousSearchTerm = result[result.length -1];
-    
-    if (searchTerm === previousSearchTerm) {
-      return result;
-    } else {
-      return result.concat(searchTerm);
-    }
+  urls // 빈 배열 result  
+    .reduce((result, url, index) => {
+      const searchTerm = extractSearchTerm(url);
+      if (index === 0) {
+        return result.concat(searchTerm);
+      }
+      
+      const previousSearchTerm = result[result.length -1];
+      
+      if (searchTerm === previousSearchTerm) {
+        return result;
+      } else {
+        return result.concat(searchTerm);
+      }
     }, [])
-  .slice(-6)
-  .slice(0, -1)
-  .map(extractSearchTerm);
+    .slice(-6)
+    .slice(0, -1)
 
 {const initialStories = [
   {
@@ -241,7 +239,7 @@ const App = () => {
     const searchTerm = extractSearchTerm(lastUrl);
     handleSearch(searchTerm, stories.page + 1);
   };
-
+  
   const handleSearch = (searchTerm, page) =>{
     const url = getUrl(searchTerm, page);
     setUrls(urls.concat(url));
@@ -249,6 +247,20 @@ const App = () => {
     // setSearchTerm(event.target.value);
     // localStorage.setItem('search', event.target.value);
   };
+
+  useEffect(() => {
+    function onScroll(){
+      if (window.scrollY + document.documentElement.clientHeight > document.documentElement.scrollHeight - 10){
+        handleMore();
+      } 
+    }
+    window.addEventListener('scroll', onScroll);
+    return () => {
+      // 메모리 누수 방지
+      window.removeEventListener('scroll', onScroll);
+    }
+  })
+
 
   const lastSearches = getLastSearches(urls);
     
@@ -293,13 +305,7 @@ const App = () => {
       <List 
           list={stories.data} 
           onRemoveItem={handleRemoveStory} />
-      {stories.isLoading ? (
-        <p>Loding...</p>
-        ) : (
-          <StyledButton type="button" onClick={handleMore}>
-            More
-          </StyledButton>
-          )}
+      {stories.isLoading && <p>Loding...</p>}
       {/* 조건이 참이면 && 뒷부분이 출력됨 거짓일 시 무시*/}
       {stories.isError && <p>Something went Wrong ...</p>}
     </StyledContainer>
